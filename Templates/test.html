@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+
+table, th, td {
+    border: 1px solid black;
+}
+
+th {
+    text-align: center;
+}
+
+td {
+    text-align: center;
+}
+
+</style>
+</head>
+<body>
+    <div> Valid: {{result['Valid']}} <div>
+    <div> Details: {{result['Details']['Place']}} <div>
+    <div> Latitude: {{result['Latitude']}} <div>
+    <div> Longitude: {{result['Longitude']}} <div>
+
+    <table>
+        <tr>
+            <th> Year cal BP </th>
+            <th> Radiocarbon Determination (BP) </th>
+            <th> Uncertainty (BP) </th>
+        </tr>
+        
+        {% for key in result['keys']: %}
+
+        <tr><td width="3%"> {{result['data']['year'][key]}}  </td>
+        <td width="3%"> {{ result['data']['Radiocarbon Determination (BP)'][key] }}  </td>
+        <td width="3%"> {{result['data']['error_Marine13_detrended'][key]}}  </td></tr>
+        {% endfor %}
+
+        
+    </table>
+</body>
+</html>
