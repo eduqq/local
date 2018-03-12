@@ -23,7 +23,7 @@ This is used by api.py to create local curves. Use api.py to run the REST API.
 ## GET /coordinates?lat={latitude}&lon={longitude}
 
 You can query the API using the route specified in api.py and choosing the geographic coordinates of your study region.
-The API will return a HTML table with **"Year cal BP"**, **"Radiocarbon Determination (BP)"** and **"Uncertainty (BP)"**: 
+The API will return details in JSON and a HTML table with **"Year cal BP"**, **"Radiocarbon Determination (BP)"** and **"Uncertainty (BP)"**: 
 
 `return Response(render_template('test.html', result={'keys':keys, 'data':data, 'Details':{'Place': 'Sea'}, 'Valid': 'True',
         'Latitude': latitude, 'Longitude': longitude}))`
