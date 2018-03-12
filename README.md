@@ -25,21 +25,16 @@ This is used by api.py to create local curves. Use api.py to run the REST API.
 You can query the API using the route specified in api.py and choosing the geographic coordinates of your study region.
 The API will return details in JSON and a HTML table with **"Year cal BP"**, **"Radiocarbon Determination (BP)"** and **"Uncertainty (BP)"**: 
 
-`return Response(render_template('test.html', result={'keys':keys, 'data':data, 'Details':{'Place': 'Sea'}, 'Valid': 'True',
-        'Latitude': latitude, 'Longitude': longitude}))`
+![True](https://user-images.githubusercontent.com/34550058/37311339-c857c9a4-263e-11e8-894c-871c28d2e408.jpg)
 
 If you choose the coordinates of a place which is not available in the underlying model, data for the closest location will be returned instead:
 
-`return Response(render_template('test.html', result={'keys':keys, 'data':data, 'Details':{'Place': 'Sea'}, 'Valid': 'False', 
-        'Latitude': latitude, 'Longitude': longitude}))`
+![False](https://user-images.githubusercontent.com/34550058/37311377-e75db8cc-263e-11e8-84c1-df94526481ed.jpg)
 
 If you use an incorrect URL format to query the REST API, you will a 404 HTTP status response:
 
-`message = {
-            'status': 404,
-            'message': 'Not Found: ' + request.url,
-    }
-    resp = jsonify(message)
-    resp.status_code = 404`
+![Error](https://user-images.githubusercontent.com/34550058/37311543-96010cc6-263f-11e8-9e95-ca4c65cb8e1a.png)
+
+
 
 
