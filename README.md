@@ -20,13 +20,26 @@ A complete description can be found in Alves et al. (2018).
 All the necessary data was uploaded as supplementary material for Alves et al. (2018). Start by running filter.py to generate the filter.csv file. 
 This is used by api.py to create local curves. Use api.py to run the REST API. 
 
-## Overview
+## GET /coordinates?lat={latitude}&lon={longitude}
 
 You can query the API using the route specified in api.py and choosing the geographic coordinates of your study region.
-The API will return **"Year cal BP"**, **"Radiocarbon Determination (BP)"** and **"Uncertainty (BP)"** in JSON. If you choose the
-coordinates of a place which is not available in the underlying model, data for the closest location will be returned instead. If you
-use an incorrect URL format to query the REST API, you will a 404 HTTP status response.
+The API will return a HTML table with **"Year cal BP"**, **"Radiocarbon Determination (BP)"** and **"Uncertainty (BP)"**: 
 
-## Example query using URL parameters
+`return Response(render_template('test.html', result={'keys':keys, 'data':data, 'Details':{'Place': 'Sea'}, 'Valid': 'True',
+        'Latitude': latitude, 'Longitude': longitude}))`
 
-http://127.0.0.1:5000/coordinates?lat=0&lon=0
+If you choose the coordinates of a place which is not available in the underlying model, data for the closest location will be returned instead:
+
+`return Response(render_template('test.html', result={'keys':keys, 'data':data, 'Details':{'Place': 'Sea'}, 'Valid': 'False', 
+        'Latitude': latitude, 'Longitude': longitude}))`
+
+If you use an incorrect URL format to query the REST API, you will a 404 HTTP status response:
+
+`message = {
+            'status': 404,
+            'message': 'Not Found: ' + request.url,
+    }
+    resp = jsonify(message)
+    resp.status_code = 404`
+
+
