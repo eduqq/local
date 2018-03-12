@@ -21,8 +21,10 @@ All the necessary data was uploaded as supplementary material for Alves et al. (
 This is used by api.py to create local curves. Use api.py to run the REST API. 
 
 ## GET /coordinates?lat={latitude}&lon={longitude}
-
 You can query the API using the route specified in api.py and choosing the geographic coordinates of your study region.
+
+## Examples:
+
 The API will return details in JSON and a HTML table with **"Year cal BP"**, **"Radiocarbon Determination (BP)"** and **"Uncertainty (BP)"**: 
 
 ## http://127.0.0.1:5000/coordinates?lat=1.25&lon=0
