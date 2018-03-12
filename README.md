@@ -10,11 +10,10 @@ A complete description can be found in Alves et al. (2018).
 ## Dependencies  
 
 * Python 2.7.14
-* Pandas
-* Numpy
-* csv
-* netCDF4
-* flask
+* Pandas 0.20.3
+* Numpy  1.11.3 
+* netCDF4 1.3.1
+* flask   0.12.2
 
 ## Instructions 
 
