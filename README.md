@@ -17,8 +17,7 @@ A complete description can be found in Alves et al. (2018).
 
 ## Instructions 
 
-All the necessary data was uploaded as supplementary material for Alves et al. (2018). Start by running filter.py to generate the filter.csv file. 
-This is used by api.py to create local curves. Use api.py to run the REST API. 
+All the necessary data was uploaded as supplementary material for Alves et al. (2018). Data and code should be in the same folder. The api.py code creates local curves. Use api.py to run the REST API. 
 
 ## GET /coordinates?lat={latitude}&lon={longitude}
 You can query the API using the route specified in api.py and choosing the geographic coordinates of your study region.
@@ -29,19 +28,19 @@ The API will return details in JSON and a HTML table with **"Year cal BP"**, **"
 
 ## http://127.0.0.1:5000/coordinates?lat=1.25&lon=0
 
-![True](https://user-images.githubusercontent.com/34550058/37311339-c857c9a4-263e-11e8-894c-871c28d2e408.jpg)
+![True](https://github.com/eduqq/local_curves/Images/true.png)
 
 If you choose the coordinates of a place which is not available in the underlying model, data for the closest location will be returned instead:
 
 ## http://127.0.0.1:5000/coordinates?lat=0&lon=0
 
-![False](https://user-images.githubusercontent.com/34550058/37311377-e75db8cc-263e-11e8-84c1-df94526481ed.jpg)
+![False](https://github.com/eduqq/local_curves/Images/false.png)
 
 If you use an incorrect URL format to query the REST API, you will get a 404 HTTP status response:
 
 ## http://127.0.0.1:5000/coordinate?lat=0&lon=0
 
-![Error](https://user-images.githubusercontent.com/34550058/37311543-96010cc6-263f-11e8-9e95-ca4c65cb8e1a.png)
+![Error](https://github.com/eduqq/local_curves/Images/error.png)
 
 
 
