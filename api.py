@@ -171,7 +171,7 @@ def function1():
                 df['error'] = df2['error']
                 df_smooth = smooth_timeseries(df['year'][0:10], df['cra'][0:10], df['year'][4791:4801].reset_index(drop=True), \
                     df['cra'][4791:4801].reset_index(drop=True), df['error'][0:10], df['error'][4791:4801].reset_index(drop=True), df)
-		df_smooth.to_csv('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.csv', index=False, header=True)
+		#df_smooth.to_csv('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.csv', index=False, header=True)
 		return create_http_response(df_smooth, lat, lon)
             
     elif lon not in new_lons or lat not in lats:
@@ -201,7 +201,7 @@ def function1():
                 df['error'] = df2['error']
                 df_smooth = smooth_timeseries(df['year'][0:10], df['cra'][0:10], df['year'][4791:4801].reset_index(drop=True), \
                     df['cra'][4791:4801].reset_index(drop=True), df['error'][0:10], df['error'][4791:4801].reset_index(drop=True), df)
-        df_smooth.to_csv('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.csv', index=False, header=True)
+        #df_smooth.to_csv('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.csv', index=False, header=True)
 	return invalid_location(df_smooth, lat, lon)
 
     
