@@ -9,11 +9,12 @@ app = Flask(__name__)
 
 # Importing the data:
 
-# Marine13 MRA-free resulting from filter.py
+# IntCal13 and Marine13 (Delta14C and CRA).
 
-df1 = pd.read_csv('filter.csv')
+df1 = pd.read_csv('Intcal13.csv')
+df2 = pd.read_csv('Marine13.csv')
 
-# R (MRA) from the model described in Butzin et al. (2017).
+# MRA from the model described in Butzin et al. (2017).
 # temporal resolution = 50 yr.
 
 fh = Dataset('MarineReservoirAge_0-15kcalBP_dt50years_0-100m.nc', mode = 'r')
@@ -31,13 +32,13 @@ for i in lons:
 
 new_lons = np.asarray(new_lons)
 
-# This function finds the coordinates available in the model that are the closest to the study location:
+# This function finds the coordinates available in the model that are the closest to the chosen location:
 
 def find_nearest(array,value):
     nearest = (np.abs(array-value)).argmin()
     return array[nearest]
 
-# This function finds the index of the coordinates available in the model that are the closest to the study location.
+# This function finds the index of the coordinates available in the model that are the closest to the chosen location.
 
 def find_idx(array,value): 
     idx = (np.abs(array-value)).argmin()
@@ -45,8 +46,8 @@ def find_idx(array,value):
 
 # resolution Marine13: 0-10500 (5), 10500-25000 (10), 25000-50000 (20).
 # resolution Butzin et al. (2017) data: 0-50000 (50).
-# This function interpolates model's data to match Marine13 MRA-free temporal resolution.
-# It puts all sections of the interpolated MRA (same resolution of MRA-free Marine13) together. 
+# This function interpolates the model data to match the Marine13 temporal resolution.
+# It puts all sections of the interpolated MRA (same resolution of Marine13) together. 
 
 def interpolation(time, MRA):
 
@@ -60,65 +61,64 @@ def interpolation(time, MRA):
     s = (s1 + s2 + s3) 
     MRA_interp = (MRA_interp1 + MRA_interp2 + MRA_interp3)
 
-    df2 = pd.DataFrame({'year':s, 'MRA_avg':MRA_interp})
+    df3 = pd.DataFrame({'year':s, 'MRA_avg':MRA_interp})
 
-    return df2
+    return df3
 
-# This removes high frequency components of the MRA timeseries.
-# The filter causes data loss at the beginning and at the end of the timeseries. This performs eflections at the extremes.
+# This function removes high frequency components from the MRA timeseries.
+# The filter causes data loss at the beginning and at the end of the timeseries. This function performs reflections at the extremes.
 # The function builds the MRA timeseries and smoothes it.
 
-def smooth_time_series(year, MRA_avg, year_end, MRA_avg_end, middle):
-
-    
+def smooth_timeseries(year, cra, year_end, cra_end, error, error_end, middle):
 
     year_r = np.asarray(list(reversed(year)))
-    MRA_avg_r = np.asarray(list(reversed(MRA_avg)))
+    cra_r = np.asarray(list(reversed(cra)))
+    error_r = np.asarray(list(reversed(error)))
     year_end_r = np.asarray(list(reversed(year_end)))
-    MRA_avg_end_r = np.asarray(list(reversed(MRA_avg_end)))
+    cra_end_r = np.asarray(list(reversed(cra_end)))
+    error_end_r = np.asarray(list(reversed(error_end)))
 
-    begin_r = pd.DataFrame({'year': year_r, 'MRA_avg': MRA_avg_r}) 
-    end_r = pd.DataFrame({'year': year_end_r, 'MRA_avg': MRA_avg_end_r}) 
-    timeseries = pd.concat([begin_r, middle, end_r]) 
+    begin_r = pd.DataFrame({'year': year_r, 'cra': cra_r, 'error':error_r}) 
+    end_r = pd.DataFrame({'year': year_end_r, 'cra': cra_end_r, 'error':error_end_r}) 
+    smooth = pd.concat([begin_r, middle, end_r]) 
 
-    timeseries['MRA_trend'] = timeseries['MRA_avg'].rolling(win_type = 'triang', window=201, center=True).mean()
+    smooth['cra_trend'] = smooth['cra'].rolling(win_type = 'triang', window=21, center=True).mean()
+    smooth['error_trend'] = smooth['error'].rolling(win_type = 'triang', window=21, center=True).mean()
 
-    timeseries = timeseries[pd.notnull(timeseries['MRA_trend'])]
+    smooth = smooth[pd.notnull(smooth['cra_trend'])]
 
-    return timeseries
+    return smooth
 
 # Returning the values: 
-# Here the MRA timeseries is added together with the MRA-free Marine13 (same time resolution).
-# The local curve is calculated and added to the combined dataframe which is exported to a .csv file.
-# The local curve (specific columns of the df) is stored as json.
+# The local curve is exported to a .csv file.
+# The local curve is stored as json.
 
 def create_http_response(df, lat, lon):
     
-    out = df[['Radiocarbon Determination (BP)', 'year', 'error_Marine13_detrended']].to_json() 
+    out = df[['MRA_avg', 'year', 'Delta14C', 'Delta_sigma','Fm', 'cra_trend', 'error_trend']].to_json() 
     data = json.loads(out)
 
     latitude = str(lat)
     longitude = str(lon)
 
-    keys = data['Radiocarbon Determination (BP)'].keys() 
+    keys = data['MRA_avg'].keys() 
     keys.sort(key=float)
     return Response(render_template('test.html', result={'keys':keys, 'data':data, 'Details':{'Place': 'Sea'}, 'Valid': 'True',\
         'Latitude': latitude, 'Longitude': longitude}))
 
 # Returning data for the closest available region when user chooses an invalid location:
-# Here the MRA timeseries is added together with the MRA-free Marine13 (same time resolution).
-# The local curve is calculated and added to the combined dataframe which is exported to a .csv file.
-# The local curve (specific columns of the df) is stored as json.
+# The local curve is exported to a .csv file.
+# The local curve is stored as json.
 
 def invalid_location(df, lat, lon):
     
-    out = df[['Radiocarbon Determination (BP)', 'year', 'error_Marine13_detrended']].to_json() 
+    out = df[['MRA_avg', 'year', 'Delta14C', 'Delta_sigma', 'Fm', 'cra_trend', 'error_trend']].to_json()
     data = json.loads(out)
 
     latitude = str(lat)
     longitude = str(lon)
 
-    keys = data['Radiocarbon Determination (BP)'].keys() 
+    keys = data['MRA_avg'].keys() 
     keys.sort(key=float)
     return Response(render_template('test.html', result={'keys':keys, 'data':data, 'Details':{'Place': 'Sea'}, 'Valid': 'False', \
         'Latitude': latitude, 'Longitude': longitude}))
@@ -138,6 +138,7 @@ def not_found(error=None):
 
 # Getting data for a chosen location (inputing latitude and longitude):
 # URL in the format http://127.0.0.1:5000/coordinates?lon=0&lat=0.
+# CRA are calculated from IntCal13 and Butzin Data.
 
 @app.route('/coordinates', methods = ['GET'])
 def function1():
@@ -152,20 +153,26 @@ def function1():
         MRA = MRAavgs [:, lat_idx, lon_idx] 
 
         interp = interpolation(time, MRA)
-        timeseries = smooth_time_series(interp['year'][0:100], interp['MRA_avg'][0:100], interp['year'][4701:4801].reset_index(drop=True), interp['MRA_avg'][4701:4801].reset_index(drop=True), interp)
         
         if np.ma.is_masked(MRA):
             message = {
-            'Valid': False, 'Details': {'Place': 'Land'} 
+            'Valid': False, 'Details': {'Place': 'Invalid'} 
             }
             resp = jsonify(message)
             return resp
         
         else:
-			df = df1.join(timeseries)
-			df['Radiocarbon Determination (BP)'] = df['Marine13_detrended'] + df['MRA_trend']
-			df.to_csv('LOCal13.csv', index=False, header=True)
-			return create_http_response(df, lat, lon)
+			df = pd.DataFrame(interp)
+        for row in df.iterrows():
+                df['Delta14C'] = (df1['Delta14C_t']+1000)/(np.exp(df['MRA_avg']/8033))-1000
+                df['Delta_sigma'] = df1['sigma']
+                df['Fm'] = (df['Delta14C']/1000+1)*np.exp(df1['ad']/8033-0.24274866)
+                df['cra'] = -(8033*np.log(df['Fm']))
+                df['error'] = df2['error']
+                df_smooth = smooth_timeseries(df['year'][0:10], df['cra'][0:10], df['year'][4791:4801].reset_index(drop=True), \
+                    df['cra'][4791:4801].reset_index(drop=True), df['error'][0:10], df['error'][4791:4801].reset_index(drop=True), df)
+		df_smooth.to_csv('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.csv', index=False, header=True)
+		return create_http_response(df_smooth, lat, lon)
             
     elif lon not in new_lons or lat not in lats:
         
@@ -176,21 +183,26 @@ def function1():
         MRA = MRAavgs [:, lat_idx, lon_idx] 
 
         interp = interpolation(time, MRA)
-        timeseries = smooth_time_series(interp['year'][0:100], interp['MRA_avg'][0:100], interp['year'][4701:4801].reset_index(drop=True), interp['MRA_avg'][4701:4801].reset_index(drop=True), interp)
-
 
         if np.ma.is_masked(MRA):
             message = {
-            'Valid': False, 'Details': {'Place': 'Land'} 
+            'Valid': False, 'Details': {'Place': 'Invalid'} 
             }
             resp = jsonify(message)
             return resp
 
         else:
-			df = df1.join(timeseries)
-			df['Radiocarbon Determination (BP)'] = df['Marine13_detrended'] + df['MRA_trend']
-			df.to_csv('LOCal13.csv', index=False, header=True)
-			return invalid_location(df, lat, lon)
+			df = pd.DataFrame(interp)
+        for row in df.iterrows():
+                df['Delta14C'] = (df1['Delta14C_t']+1000)/(np.exp(df['MRA_avg']/8033))-1000
+                df['Delta_sigma'] = df1['sigma']
+                df['Fm'] = (df['Delta14C']/1000+1)*np.exp(df1['ad']/8033-0.24274866)
+                df['cra'] = -8033*np.log(df['Fm'])
+                df['error'] = df2['error']
+                df_smooth = smooth_timeseries(df['year'][0:10], df['cra'][0:10], df['year'][4791:4801].reset_index(drop=True), \
+                    df['cra'][4791:4801].reset_index(drop=True), df['error'][0:10], df['error'][4791:4801].reset_index(drop=True), df)
+        df_smooth.to_csv('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.csv', index=False, header=True)
+	return invalid_location(df_smooth, lat, lon)
 
     
 if __name__ == '__main__':

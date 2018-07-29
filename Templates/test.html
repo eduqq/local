@@ -27,15 +27,23 @@ td {
     <table>
         <tr>
             <th> Year cal BP </th>
-            <th> Radiocarbon Determination (BP) </th>
+<!--             <th> MRA_avg </th>
+            <th> ∆14C </th>
+            <th> Delta_sigma </th>
+            <th> Fm </th> -->
+            <th> Radiocarbon Age (BP) </th>
             <th> Uncertainty (BP) </th>
         </tr>
         
         {% for key in result['keys']: %}
 
-        <tr><td width="3%"> {{result['data']['year'][key]}}  </td>
-        <td width="3%"> {{ result['data']['Radiocarbon Determination (BP)'][key] }}  </td>
-        <td width="3%"> {{result['data']['error_Marine13_detrended'][key]}}  </td></tr>
+        <tr><td> {{result['data']['year'][key]}}  </td>
+        <!-- <td> {{ result['data']['MRA_avg'][key] }}  </td>
+        <td> {{ result['data']['Delta14C'][key] }}  </td>
+        <td> {{ result['data']['Delta_sigma'][key] }}  </td>
+        <td> {{ result['data']['Fm'][key] }}  </td> -->
+        <td> {{ result['data']['cra_trend'][key] }}  </td>
+         <td> {{ result['data']['error_trend'][key] }}  </td><tr>
         {% endfor %}
 
         
