@@ -30,19 +30,19 @@ The API will return details in JSON and a HTML table with **"Year cal BP"**, **"
 
 ## http://127.0.0.1:5000/coordinates?lat=1.25&lon=0
 
-![True](https://github.com/eduqq/local_curves/Images/true.png)
+![True](https://github.com/eduqq/local_curves/blob/master/Images/true.png)
 
 If you choose the coordinates of a place which is not available in the underlying model, data for the closest location will be returned instead:
 
 ## http://127.0.0.1:5000/coordinates?lat=0&lon=0
 
-![False](https://github.com/eduqq/local_curves/Images/false.png)
+![False](https://github.com/eduqq/local_curves/blob/master/Images/false.png)
 
 If you use an incorrect URL format to query the REST API, you will get a 404 HTTP status response:
 
 ## http://127.0.0.1:5000/coordinate?lat=0&lon=0
 
-![Error](https://github.com/eduqq/local_curves/Images/error.png)
+![Error](https://github.com/eduqq/local_curves/blob/master/Images/error.png)
 
 
 
