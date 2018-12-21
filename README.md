@@ -22,7 +22,7 @@ All the necessary data was uploaded as supplementary material for Alves et al. (
 ## GET /coordinates?lat={latitude}&lon={longitude}
 You can query the API using the route specified in api.py and choosing the geographic coordinates of your study region. Alternatively, you can use the boxes to enter the coordinate values.
 
-![Box](https://github.com/eduqq/local_curves/Images/box.png)
+![box](https://github.com/eduqq/local_curves/blob/Images/box.png)
 
 ## Examples:
 
