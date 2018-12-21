@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div><th> Please enter the geographical coordinates of your area of interest. </th></div>
+    <form method="post" action="/coord">
+        <label>Longitude:</label>
+        <input type="text" id="lo">
+        <label>Latitude:</label>
+        <input type="text" id="la">
+
+        <a href="" id="qdlc" ><input type="button" value="OK" onclick="link()"></a>
+	<script>
+		function link() {
+			var x = document.getElementById('lo').value;
+			var y = document.getElementById('la').value;
+			document.getElementById('qdlc').href = "http://127.0.0.1:5000/coordinates?lon="+x+"&lat="+y;
+
+		}
+	</script>
+<div><th> The analysis can take a while. </th></div>
+
+</body>
+</html>

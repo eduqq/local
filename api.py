@@ -1,8 +1,12 @@
 import numpy as np
 import pandas as pd
 import csv
+import scipy
+import xlwt
 from netCDF4 import Dataset
 from flask import Flask, url_for, request, json, Response, jsonify, render_template
+import sys
+import openpyxl
 
 
 app = Flask(__name__)
@@ -79,13 +83,19 @@ def smooth_timeseries(year, cra, year_end, cra_end, error, error_end, middle):
     error_end_r = np.asarray(list(reversed(error_end)))
 
     begin_r = pd.DataFrame({'year': year_r, 'cra': cra_r, 'error':error_r}) 
-    end_r = pd.DataFrame({'year': year_end_r, 'cra': cra_end_r, 'error':error_end_r}) 
-    smooth = pd.concat([begin_r, middle, end_r]) 
+    end_r = pd.DataFrame({'year': year_end_r, 'cra': cra_end_r, 'error':error_end_r})
+
+    if sys.version_info < (3, 0, 0):
+        smooth = pd.concat([begin_r, middle, end_r])
+    else:
+        smooth = pd.concat([begin_r, middle, end_r],sort=False)
 
     smooth['cra_trend'] = smooth['cra'].rolling(win_type = 'triang', window=21, center=True).mean()
     smooth['error_trend'] = smooth['error'].rolling(win_type = 'triang', window=21, center=True).mean()
 
     smooth = smooth[pd.notnull(smooth['cra_trend'])]
+    smooth = smooth.round({'cra_trend': 0, 'error_trend': 0})
+    smooth = smooth.astype({'cra_trend':int,'error_trend':int})
 
     return smooth
 
@@ -94,14 +104,14 @@ def smooth_timeseries(year, cra, year_end, cra_end, error, error_end, middle):
 # The local curve is stored as json.
 
 def create_http_response(df, lat, lon):
-    
-    out = df[['MRA_avg', 'year', 'Delta14C', 'Delta_sigma','Fm', 'cra_trend', 'error_trend']].to_json() 
+
+    out = df[['MRA_avg', 'year', 'Delta14C', 'Delta_sigma', 'Fm', 'cra_trend', 'error_trend']].to_json()
     data = json.loads(out)
 
     latitude = str(lat)
     longitude = str(lon)
 
-    keys = data['MRA_avg'].keys() 
+    keys = list(data['MRA_avg'])
     keys.sort(key=float)
     return Response(render_template('test.html', result={'keys':keys, 'data':data, 'Details':{'Place': 'Sea'}, 'Valid': 'True',\
         'Latitude': latitude, 'Longitude': longitude}))
@@ -111,20 +121,26 @@ def create_http_response(df, lat, lon):
 # The local curve is stored as json.
 
 def invalid_location(df, lat, lon):
-    
+
     out = df[['MRA_avg', 'year', 'Delta14C', 'Delta_sigma', 'Fm', 'cra_trend', 'error_trend']].to_json()
     data = json.loads(out)
 
     latitude = str(lat)
     longitude = str(lon)
 
-    keys = data['MRA_avg'].keys() 
+    keys = list(data['MRA_avg'])
     keys.sort(key=float)
     return Response(render_template('test.html', result={'keys':keys, 'data':data, 'Details':{'Place': 'Sea'}, 'Valid': 'False', \
         'Latitude': latitude, 'Longitude': longitude}))
             
+#Initial page of the API
+
+@app.route('/')
+def beg ():
+    return render_template('map.html')
+
 # Returning error message (e.g., incorrect URLs):
-    
+
 @app.errorhandler(404)
 def not_found(error=None):
     message = {
@@ -162,51 +178,63 @@ def function1():
             return resp
         
         else:
-			df = pd.DataFrame(interp)
+            df = pd.DataFrame(interp)
         for row in df.iterrows():
-                df['Delta14C'] = (df1['Delta14C_t']+1000)/(np.exp(df['MRA_avg']/8033))-1000
+                df['Delta14C'] = (df1['Delta14C_t'] + 1000) / (np.exp(df['MRA_avg'] / 8033)) - 1000
                 df['Delta_sigma'] = df1['sigma']
-                df['Fm'] = (df['Delta14C']/1000+1)*np.exp(df1['ad']/8033-0.24274866)
-                df['cra'] = -(8033*np.log(df['Fm']))
+                j = (df['Delta14C'] / 1000 + 1)
+                df['Fm'] = (df['Delta14C'] / 1000 + 1)*np.exp(df1['ad'] / 8267 - 0.23587759)
+                df['cra2'] = -(8033 * np.log(j))
+                df['cra'] = df['cra2'] - 8033 * (df1['ad'] / 8267 - 0.23587759)
                 df['error'] = df2['error']
                 df_smooth = smooth_timeseries(df['year'][0:10], df['cra'][0:10], df['year'][4791:4801].reset_index(drop=True), \
                     df['cra'][4791:4801].reset_index(drop=True), df['error'][0:10], df['error'][4791:4801].reset_index(drop=True), df)
-		#df_smooth.to_csv('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.csv', index=False, header=True)
-		return create_http_response(df_smooth, lat, lon)
-            
+        df_smooth.drop(['cra2'], axis=1, inplace=True)
+        df_smooth.to_csv('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.csv', index=False, header=True)
+        writer = pd.ExcelWriter('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.xls')
+        df_smooth.to_excel(writer, 'Sheet1')
+        writer.save()
+        return create_http_response(df_smooth, lat, lon)
+
     elif lon not in new_lons or lat not in lats:
-        
+
         lon = find_nearest(new_lons, lon)
         lat = find_nearest(lats, lat)
-	lat_idx = find_idx(lats, lat)
+        lat_idx = find_idx(lats, lat)
         lon_idx = find_idx(new_lons, lon)
-        MRA = MRAavgs [:, lat_idx, lon_idx] 
+        MRA = MRAavgs [:, lat_idx, lon_idx]
 
         interp = interpolation(time, MRA)
 
         if np.ma.is_masked(MRA):
             message = {
-            'Valid': False, 'Details': {'Place': 'Invalid'} 
+            'Valid': False, 'Details': {'Place': 'Invalid'}
             }
             resp = jsonify(message)
             return resp
 
         else:
-			df = pd.DataFrame(interp)
+            df = pd.DataFrame(interp)
         for row in df.iterrows():
-                df['Delta14C'] = (df1['Delta14C_t']+1000)/(np.exp(df['MRA_avg']/8033))-1000
+                df['Delta14C'] = (df1['Delta14C_t'] + 1000) / (np.exp(df['MRA_avg'] / 8033)) - 1000
                 df['Delta_sigma'] = df1['sigma']
-                df['Fm'] = (df['Delta14C']/1000+1)*np.exp(df1['ad']/8033-0.24274866)
-                df['cra'] = -8033*np.log(df['Fm'])
+                j = (df['Delta14C'] / 1000 + 1)
+                df['Fm'] = (df['Delta14C'] / 1000 + 1) * np.exp(df1['ad'] / 8267 - 0.23587759)
+                df['cra2'] = -(8033 * np.log(j))
+                df['cra'] = df['cra2'] - 8033 * (df1['ad'] / 8267 - 0.23587759)
                 df['error'] = df2['error']
                 df_smooth = smooth_timeseries(df['year'][0:10], df['cra'][0:10], df['year'][4791:4801].reset_index(drop=True), \
                     df['cra'][4791:4801].reset_index(drop=True), df['error'][0:10], df['error'][4791:4801].reset_index(drop=True), df)
-        #df_smooth.to_csv('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.csv', index=False, header=True)
-	return invalid_location(df_smooth, lat, lon)
+        df_smooth.drop(['cra2'], axis=1, inplace=True)
+        df_smooth.to_csv('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.csv', index=False, header=True)
+        writer = pd.ExcelWriter('LOCal13_' + 'lat=' + str(lat) + 'lon=' + str(lon) + '.xls')
+        df_smooth.to_excel(writer, 'Sheet1')
+        writer.save()
+    return invalid_location(df_smooth, lat, lon)
 
     
 if __name__ == '__main__':
-    app.run()
+    app.run(use_reloader=True)
 
 
 
