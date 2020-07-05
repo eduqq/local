@@ -1,12 +1,8 @@
 import numpy as np
 import pandas as pd
-import csv
-import scipy
-import xlwt
 from netCDF4 import Dataset
 from flask import Flask, url_for, request, json, Response, jsonify, render_template
 import sys
-import openpyxl
 
 
 app = Flask(__name__)
@@ -234,7 +230,7 @@ def function1():
 
     
 if __name__ == '__main__':
-    app.run(use_reloader=True)
+    app.run(use_reloader=False)
 
 
 
